@@ -11,18 +11,6 @@ from dataclasses import dataclass
 import numpy as np
 
 
-@dataclass
-class KalmanStateVector:
-    x: float
-    y: float
-    width: float
-    height: float
-    vx: float
-    vy: float
-    vw: float
-    vh: float
-
-
 class KalmanStateVector1D:
     x: float
     vx: float

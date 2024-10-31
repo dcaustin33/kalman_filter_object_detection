@@ -19,8 +19,8 @@ def generate_fake_data(steps: int = 100) -> list:
     all_boxes = []
     current_position = position_0
     for i in range(steps):
-        velocity_x = random.randint(1, 6)
-        velocity_y = random.randint(1, 4)
+        velocity_x = random.randint(1, 10)
+        velocity_y = random.randint(1, 10)
         width_noise = 0 #random.randint(-2, 2)
         height_noise = 0 #random.randint(-2, 2)
         
