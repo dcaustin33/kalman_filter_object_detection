@@ -43,5 +43,7 @@ if __name__ == "__main__":
         tracker.update(np.array([box[0], box[1]]), dt=1)
         kalman_states.append([int(tracker.state.x), int(tracker.state.y), 1, 1])
 
+    import pdb; pdb.set_trace()
     # Plot both trajectories
     plot_trajectory(frame, all_boxes, kalman_states)
+    

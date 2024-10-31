@@ -56,11 +56,10 @@ class KalmanStateVector2D:
                 self.vy + other[3][0],
             ]
         )
-        
+
     @property
     def state_matrix(self) -> np.ndarray:
         return np.array([self.x, self.y, self.vx, self.vy])
-        
 
 
 class Kalman2DTracker:
@@ -75,28 +74,33 @@ class Kalman2DTracker:
         self.state.initialize_covariance(state_noise_std)
         self.predicted_state = None
         self.measured_state = None
-        self.measurement_noise_std = measurement_noise_std
+        self.measurement_noise_std = np.array(
+            [[measurement_noise_std, 0], [0, measurement_noise_std]]
+        )
         self.previous_states = []
         self.h = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
-        
+
     def predict(self, dt: float) -> None:
         self.previous_states.append(self.state)
         self.state.predict_next_state(dt)
-        
+
+    def update_covariance(self, gain: np.ndarray) -> None:
+        self.state.cov -= gain @ self.h @ self.state.cov
+
     def update(self, measurement: np.ndarray, dt: float = 1) -> None:
         """Measurement will be a x, y position"""
         assert dt == 1, "Only single step transitions are supported due to F matrix"
         self.predict(dt=dt)
         innovation = measurement - self.h @ self.state.state_matrix
-        gain_invertible = self.h @ self.state.cov @ self.h.T + self.measurement_noise_std**2
+        gain_invertible = (
+            self.h @ self.state.cov @ self.h.T + self.measurement_noise_std**2
+        )
         gain_inverse = np.linalg.inv(gain_invertible)
-        gain = gain_inverse @ self.h @ self.state.cov
-        
-        new_state = self.state.state_matrix + innovation @ gain
+        gain = self.state.cov @ self.h.T @ gain_inverse
+
+        new_state = self.state.state_matrix + gain @ innovation
+        self.update_covariance(gain)
         self.state.x = new_state[0]
         self.state.y = new_state[1]
         self.state.vx = new_state[2]
         self.state.vy = new_state[3]
-        
-        
-        

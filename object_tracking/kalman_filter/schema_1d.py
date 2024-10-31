@@ -20,6 +20,8 @@ class KalmanStateVector1D:
         self.x = x
         self.vx = vx
         self.cov = None
+        self.q = np.zeros((2, 2))
+        self.f = np.array([[1, 1], [0, 1]])
 
     def initialize_covariance(self, noise_std: float) -> None:
         self.cov = np.array([[noise_std**2, 0], [0, noise_std**2]])
@@ -37,6 +39,10 @@ class KalmanStateVector1D:
         
     def __add__(self, other: np.ndarray) -> np.ndarray:
         return np.array([self.x + other[0][0], self.vx + other[1][0]])
+    
+    @property
+    def state_matrix(self) -> np.ndarray:
+        return np.array([self.x, self.vx])
 
 
 class Kalman1DTracker:
@@ -51,27 +57,31 @@ class Kalman1DTracker:
         self.state.initialize_covariance(state_noise_std)
         self.predicted_state = None
         self.measured_state = None
-        self.measurement_noise_std = measurement_noise_std
+        self.measurement_noise_std = np.array([measurement_noise_std])
         self.previous_states = []
+        self.h = np.array([[1, 0]])
 
     def predict(self, dt: float) -> None:
         # may need to make sure this is copied and not just a reference
         self.previous_states.append(self.state)
         self.state.predict_next_state(dt)
+        
+    def update_covariance(self, gain: np.ndarray) -> None:
+        self.state.cov -= gain @ self.h @ self.state.cov
 
-    def update(self, measurement: float, dt: float = 1) -> None:
-        self.predict(dt=1)
-        self.measured_state = measurement
-
-        innovation = self.measured_state - self.state.x
-        gain_first_term = 1 / (
-            self.state.cov[0][0] + self.measurement_noise_std**2
+    def update(self, measurement: np.ndarray, dt: float = 1) -> None:
+        """Measurement will be a x, y position"""
+        assert dt == 1, "Only single step transitions are supported due to F matrix"
+        self.predict(dt=dt)
+        innovation = measurement - self.h @ self.state.state_matrix
+        gain_invertible = (
+            self.h @ self.state.cov @ self.h.T + self.measurement_noise_std**2
         )
-        gain_second_term = np.array(
-            [self.state.cov[0][0], self.state.cov[0][1]]
-        ).reshape(-1, 1)
-        gain = gain_first_term * gain_second_term
+        gain_inverse = np.linalg.inv(gain_invertible)
+        gain = self.state.cov @ self.h.T @ gain_inverse
 
-        new_state = self.state + gain * innovation
+        new_state = self.state.state_matrix + gain @ innovation
+        self.update_covariance(gain)
         self.state.x = new_state[0]
         self.state.vx = new_state[1]
+        
