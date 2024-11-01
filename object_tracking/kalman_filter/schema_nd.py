@@ -21,7 +21,7 @@ class KalmanStateVectorND:
         self.states = states
         self.velocities = velocities
         self.state_matrix = np.concatenate([self.states, self.velocities])
-        self.q = np.zeros((self.state_matrix.shape[0], self.state_matrix.shape[0]))
+        self.q = np.eye(self.state_matrix.shape[0]) * 0.01
         self.cov = None
         # assumes a single step transition
         self.f = np.eye(self.state_matrix.shape[0])
