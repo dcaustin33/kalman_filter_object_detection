@@ -1,9 +1,8 @@
 """
-Implementation of a 1D Kalman Filter for tracking a single object
+Implementation of a ND Kalman Filter for tracking objects
 
 Assumptions:
-    - There is no Q noise
-    - We transition one step at a time otherwise f needs to be updated
+    - We transition one step at a time otherwise f needs to be updated, therefore every step needs a prediction
     
 """
 
@@ -64,10 +63,11 @@ class KalmanNDTracker:
     def update_covariance(self, gain: np.ndarray) -> None:
         self.state.cov -= gain @ self.h @ self.state.cov
 
-    def update(self, measurement: np.ndarray, dt: float = 1) -> None:
+    def update(self, measurement: np.ndarray, dt: float = 1, predict: bool = True) -> None:
         """Measurement will be a x, y position"""
         assert dt == 1, "Only single step transitions are supported due to F matrix"
-        self.predict(dt=dt)
+        if predict:
+            self.predict(dt=dt)
         innovation = measurement - self.h @ self.state.state_matrix
         gain_invertible = (
             self.h @ self.state.cov @ self.h.T + self.measurement_noise_std
@@ -78,3 +78,7 @@ class KalmanNDTracker:
         new_state = self.state.state_matrix + gain @ innovation
         self.update_covariance(gain)
         self.state.state_matrix = new_state
+        
+    def compute_mahalanobis_distance(self, measurement: np.ndarray) -> float:
+        innovation = measurement - self.h @ self.state.state_matrix
+        return np.sqrt(innovation.T @ np.linalg.inv(self.h @ self.state.cov @ self.h.T + self.measurement_noise_std) @ innovation)
