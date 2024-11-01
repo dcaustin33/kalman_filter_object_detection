@@ -41,7 +41,7 @@ class KalmanStateVectorND:
         return self.state_matrix + other
 
 
-class Kalman2DTracker:
+class KalmanNDTracker:
 
     def __init__(
         self,
