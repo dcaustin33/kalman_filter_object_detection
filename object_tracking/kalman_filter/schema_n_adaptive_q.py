@@ -27,7 +27,10 @@ class KalmanStateVectorNDAdaptiveQ:
         self.cov = None
         # assumes a single step transition
         self.f = np.eye(self.state_matrix.shape[0])
-        self.f[: states.shape[0], states.shape[0] :] = np.eye(states.shape[0])
+        
+        # divide by 2 as we have a velocity for each state
+        index = self.state_matrix.shape[0] // 2
+        self.f[:index, index:] = np.eye(index)
 
     def initialize_covariance(self, noise_std: float) -> None:
         self.cov = np.eye(self.state_matrix.shape[0]) * noise_std**2
@@ -100,7 +103,7 @@ class KalmanNDTrackerAdaptiveQ:
         return np.sqrt(
             innovation.T
             @ np.linalg.inv(
-                self.h @ self.state.cov @ self.h.T + self.measurement_noise_std
+                self.h @ self.state.cov @ self.h.T + self.R
             )
             @ innovation
         )
