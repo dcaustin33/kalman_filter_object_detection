@@ -53,6 +53,7 @@ class KalmanNDTracker:
         self.state.initialize_covariance(state_noise_std)
         self.predicted_state = None
         self.previous_states = []
+        self.previous_measurements = []
         self.h = np.eye(self.state.state_matrix.shape[0]) if h is None else h
         self.measurement_noise_std = np.eye(self.h.shape[0]) * measurement_noise_std**2
 
@@ -65,6 +66,7 @@ class KalmanNDTracker:
 
     def update(self, measurement: np.ndarray, dt: float = 1, predict: bool = True) -> None:
         """Measurement will be a x, y position"""
+        self.previous_measurements.append(measurement)
         assert dt == 1, "Only single step transitions are supported due to F matrix"
         if predict:
             self.predict(dt=dt)
