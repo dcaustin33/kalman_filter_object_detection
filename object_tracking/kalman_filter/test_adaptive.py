@@ -2,7 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import object_tracking.kalman_filter.fake_data as fake_data
-from object_tracking.kalman_filter.schema_nd import KalmanNDTracker, KalmanStateVectorND
+from object_tracking.kalman_filter.schema_n_adaptive_q import (
+    KalmanNDTrackerAdaptiveQ,
+    KalmanStateVectorNDAdaptiveQ,
+)
 
 
 def plot_trajectory(frame: np.ndarray, boxes1: list, boxes2: list = None):
@@ -30,21 +33,28 @@ def plot_trajectory(frame: np.ndarray, boxes1: list, boxes2: list = None):
 
 if __name__ == "__main__":
     # Generate test data
-    all_boxes = fake_data.generate_fake_data(10)
+    all_boxes = fake_data.generate_fake_data(100)
     frame = np.zeros((1000, 1000))
 
     # Initialize Kalman filter
-    state = KalmanStateVectorND(
+    state = KalmanStateVectorNDAdaptiveQ(
         states=np.array([all_boxes[0][0], all_boxes[0][1]]), velocities=np.array([0, 0])
     )
     h_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
-    tracker = KalmanNDTracker(state, Q=1, R=2.5, h=h_matrix)
+    tracker = KalmanNDTrackerAdaptiveQ(state, Q=1, R=2.5, h=h_matrix)
 
     # Track and store Kalman predictions
     kalman_states = []
     for box in all_boxes:
         tracker.update(np.array([box[0], box[1]]), dt=1)
-        kalman_states.append([int(tracker.state.state_matrix[0]), int(tracker.state.state_matrix[1]), 1, 1])
+        kalman_states.append(
+            [
+                int(tracker.state.state_matrix[0]),
+                int(tracker.state.state_matrix[1]),
+                1,
+                1,
+            ]
+        )
 
     import pdb; pdb.set_trace()
     # Plot both trajectories

@@ -6,13 +6,18 @@ Assumptions:
     
 """
 
+"""
+Adaptive Q addition is to add an update q func that takes into account the innovation
+"""
+
+
 from dataclasses import dataclass
 
 import numpy as np
 from scipy import stats
 
 
-class KalmanStateVectorND:
+class KalmanStateVectorNDAdaptiveQ:
     states: np.ndarray
     velocities: np.ndarray
     cov: np.ndarray
@@ -36,16 +41,25 @@ class KalmanStateVectorND:
 
     def predict_next_covariance(self, dt: float) -> None:
         self.cov = self.f @ self.cov @ self.f.T + self.q
-        
+
     def __add__(self, other: np.ndarray) -> np.ndarray:
         return self.state_matrix + other
 
+    def update_q(
+        self, innovation: np.ndarray, kalman_gain: np.ndarray, alpha: float = 0.98
+    ) -> None:
+        innovation = innovation.reshape(-1, 1)
+        self.q = (
+            alpha * self.q
+            + (1 - alpha) * kalman_gain @ innovation @ innovation.T @ kalman_gain.T
+        )
 
-class KalmanNDTracker:
+
+class KalmanNDTrackerAdaptiveQ:
 
     def __init__(
         self,
-        state: KalmanStateVectorND,
+        state: KalmanStateVectorNDAdaptiveQ,
         R: float,  # R
         Q: float,  # Q
         h: np.ndarray = None,
@@ -64,7 +78,6 @@ class KalmanNDTracker:
 
     def update_covariance(self, gain: np.ndarray) -> None:
         self.state.cov -= gain @ self.h @ self.state.cov
-        
 
     def update(
         self, measurement: np.ndarray, dt: float = 1, predict: bool = True
@@ -75,15 +88,14 @@ class KalmanNDTracker:
         if predict:
             self.predict(dt=dt)
         innovation = measurement - self.h @ self.state.state_matrix
-        gain_invertible = (
-            self.h @ self.state.cov @ self.h.T + self.R
-        )
+        gain_invertible = self.h @ self.state.cov @ self.h.T + self.R
         gain_inverse = np.linalg.inv(gain_invertible)
         gain = self.state.cov @ self.h.T @ gain_inverse
 
         new_state = self.state.state_matrix + gain @ innovation
 
         self.update_covariance(gain)
+        self.state.update_q(innovation, gain)
         self.state.state_matrix = new_state
 
     def compute_mahalanobis_distance(self, measurement: np.ndarray) -> float:

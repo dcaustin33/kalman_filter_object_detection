@@ -11,7 +11,6 @@ def generate_fake_data(steps: int = 100) -> list:
     width = 2
     height = 2
 
-    steps = 100
 
     random.seed(42)
     
@@ -21,8 +20,8 @@ def generate_fake_data(steps: int = 100) -> list:
     for i in range(steps):
         velocity_x = random.randint(1, 10)
         velocity_y = random.randint(1, 10)
-        width_noise = 0 #random.randint(-2, 2)
-        height_noise = 0 #random.randint(-2, 2)
+        width_noise = random.randint(-2, 2)
+        height_noise = random.randint(-2, 2)
         
         current_position = [current_position[0] + velocity_x, current_position[1] + velocity_y]
         current_width = width + width_noise
