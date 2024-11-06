@@ -19,14 +19,11 @@ from scipy import stats
 
 class KalmanStateVectorNDAdaptiveQ:
     states: np.ndarray
-    velocities: np.ndarray
     cov: np.ndarray
 
-    def __init__(self, states: np.ndarray, velocities: np.ndarray) -> None:
-        self.states = states
-        self.velocities = velocities
-        self.state_matrix = np.concatenate([self.states, self.velocities])
-        self.q = np.eye(self.state_matrix.shape[0]) * 0.01
+    def __init__(self, states: np.ndarray) -> None:
+        self.state_matrix = states
+        self.q = np.eye(self.state_matrix.shape[0])
         self.cov = None
         # assumes a single step transition
         self.f = np.eye(self.state_matrix.shape[0])
