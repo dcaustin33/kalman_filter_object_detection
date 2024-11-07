@@ -68,9 +68,12 @@ class KalmanNDTrackerAdaptiveQ:
         self.state.initialize_covariance(Q)
         self.predicted_state = None
         self.previous_states = []
-        self.previous_measurements = []
         self.h = np.eye(self.state.state_matrix.shape[0]) if h is None else h
         self.R = np.eye(self.h.shape[0]) * R**2
+        self.previous_measurements = []
+        self.previous_measurements.append(
+            (self.h @ self.state.state_matrix).reshape(-1, 1)
+        )
 
     def predict(self, dt: float) -> None:
         self.previous_states.append(self.state)
