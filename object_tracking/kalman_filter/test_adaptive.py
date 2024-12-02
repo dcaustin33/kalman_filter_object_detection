@@ -40,6 +40,7 @@ if __name__ == "__main__":
     state = KalmanStateVectorNDAdaptiveQ(
         states=np.array([all_boxes[0][0], all_boxes[0][1]]), velocities=np.array([0, 0])
     )
+    # H matrix only measure position
     h_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
     tracker = KalmanNDTrackerAdaptiveQ(state, Q=1, R=2.5, h=h_matrix)
 
@@ -56,6 +57,5 @@ if __name__ == "__main__":
             ]
         )
 
-    import pdb; pdb.set_trace()
     # Plot both trajectories
     plot_trajectory(frame, all_boxes, kalman_states)
